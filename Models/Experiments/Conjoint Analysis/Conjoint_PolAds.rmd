@@ -1,0 +1,167 @@
+---
+output: pdf_document
+classoption: landscape
+header-includes:
+  \usepackage{subcaption}
+  \usepackage{booktabs}
+  \usepackage{caption}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,comment=NA)
+library(descr)
+library(readr)
+#library(RnBeads)
+library(magick)
+library(dplyr)
+library(magrittr)
+library(grid)
+library(kableExtra)
+library(stringr)
+library(gridExtra)
+library(knitr)
+library(ggplot2)
+library(gtable)
+library(labelled)
+library(haven)
+library(gmodels)
+library(png)
+library(tidyverse)
+library(cjoint)
+library(stargazer)
+
+
+CJ <- read.csv(file = 'C:/Users/dl0ck/OneDrive/Summer 2021/PolAdsTransparency/politics_user_study/Experiments/Conjoint Analysis/CJ.csv', header = TRUE, stringsAsFactors = T)
+
+
+cj <- CJ[(complete.cases(CJ$dv1)&complete.cases(CJ$priors)),]
+
+```
+
+
+
+
+# Conjoint Experiment
+
+
+
+
+```{r edit-data}
+baselines <- list()
+baselines$sourceType <- "Company"
+baselines$sourceOrient <- "Pro-oil"
+baselines$messageStrength <- "Politically neutral"
+baselines$messageOrient <- "Pro-oil"
+baselines$priors <- "Pro-oil prior"
+baselines$image <- "Landscape"
+baselines$pid <- 'Republican'
+
+base <- list()
+base$pid <- 'Republican'
+base$sourceOrient <- 'Pro-oil'
+
+bases <- list()
+bases$pid <- 'Republican'
+bases$messageOrient <- 'Pro-oil'
+
+# results <- amce(dv1 ~  image + sourceType + messageStrength + sourceOrient  + messageOrient + priors + , cluster=TRUE, respondent.id="CaseId", weights ='WEIGHT', data=cj, baseline= baselines)
+# # plot(results, xlab="Change in Pr(Ad considered more political)", text.size=13)
+
+
+```
+
+
+## **Message x Prior Attitudes**
+```{r message-priors}
+
+messageAtt <- amce(dv1 ~  image + sourceType + messageStrength + sourceOrient  + messageOrient + priors + messageOrient*priors, cluster=TRUE, respondent.id="CaseId", respondent.varying= 'priors', weights ='WEIGHT', data=cj, baseline= baselines)
+```
+
+                                                                                                     
+```{r message-priors-plot, echo=FALSE, fig.width=9, fig.height=5}
+plot(messageAtt, xlab="Change in Pr(Ad considered more political)", text.size=13)
+```
+
+```{r message-priors-summ, echo=FALSE, results ='asis'}
+
+x <- as.data.frame(summary(messageAtt)[1])
+y <-  as.data.frame(summary(messageAtt)[3])
+z <-  as.data.frame(summary(messageAtt)[4])
+
+colnames(x) <- c("Attribute","Level","Estimate","Std. Err", "Z.value" , "Pr(>|z|)" , " ")
+colnames(y) <- c("Attribute","Level","Estimate","Std. Err", "Z.value" , "Pr(>|z|)" , " ")
+colnames(z) <- c("Attribute","Level","Estimate","Std. Err", "Z.value" , "Pr(>|z|)" , " ")
+
+kable(rbind(x,y,z),booktabs=T)
+```
+
+
+
+## **Source x Prior Attitudes**
+
+```{r source-priors}
+
+
+sourcesAtt <- amce(dv1 ~  image + sourceType + messageStrength + sourceOrient  + messageOrient + priors + sourceOrient*priors, cluster=TRUE, respondent.id="CaseId", weights ='WEIGHT', data=cj, baseline= baselines, respondent.varying= 'priors')
+
+```
+
+
+```{r source-priors-plot, fig.width=13, fig.height=9,echo=F}
+
+# Plot results
+plot(sourcesAtt, xlab="Change in Pr(Ad considered more political)", text.size=13)
+```
+
+\
+
+```{r source-priors-summ, fig.width=12, fig.height=8,echo=F}
+
+x <- as.data.frame(summary(sourcesAtt)[1])
+y <-  as.data.frame(summary(sourcesAtt)[3])
+z <-  as.data.frame(summary(sourcesAtt)[4])
+
+colnames(x) <- c("Attribute","Level","Estimate","Std. Err", "Z.value" , "Pr(>|z|)" , " ")
+colnames(y) <- c("Attribute","Level","Estimate","Std. Err", "Z.value" , "Pr(>|z|)" , " ")
+colnames(z) <- c("Attribute","Level","Estimate","Std. Err", "Z.value" , "Pr(>|z|)" , " ")
+
+kable(rbind(x,y,z),booktabs=T)
+```
+
+
+
+
+
+## **Message orientation x PID**
+```{r pid-message}
+
+messagePid <- amce(dv1 ~ messageOrient + pid + messageOrient*pid, cluster=TRUE, respondent.id="CaseId", weights ='WEIGHT', data=cj[is.na(cj$pid)==F,], baseline= bases, respondent.varying = 'pid')
+
+```
+
+```{r pid-message-plot}
+
+
+plot(messagePid, facet_wrap=c("pid"))
+
+
+```
+
+
+## **Source orientation x PID**
+```{r pid-source}
+
+sourcePid <- amce(dv1 ~ sourceOrient +  pid+ pid*sourceOrient , data=cj[is.na(cj$pid)==F,], cluster=TRUE, respondent.id="CaseId", respondent.varying = 'pid',weights = 'WEIGHT', baseline= base)
+
+```
+
+```{r pid-source-plot}
+
+
+plot(sourcePid, facet_wrap=c("pid"))
+```
+
+
+
+
+

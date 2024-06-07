@@ -1,0 +1,1401 @@
+---
+title: "TASS2"
+author: "Celia Guillard"
+date: "1/9/2021"
+output:
+  pdf_document: default
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+knitr::opts_chunk$set(message = FALSE) # The summarize() warning really is relevant so I just turn off warnings
+
+library(readr)
+library(dplyr)
+library(magrittr)
+library(knitr)
+library(ggplot2)
+library(labelled)
+library(haven)
+library(tidyverse)
+
+```
+
+Confirm working directory 
+```{r, echo=FALSE}
+getwd()
+
+```
+
+Get data 
+```{r, echo=FALSE}
+TASS1 <- read.csv(file = '8557_WUSTL-Weidenbaum04_MAIN.csv', header = TRUE, stringsAsFactors = FALSE)
+TASS2 <- read.csv(file = '8557_WUSTL-Weidenbaum05_Redacted.csv', header = TRUE, stringsAsFactors = FALSE)
+
+```
+
+Demographics:
+
+Group PartyID7 responses by political leaning
+```{r}
+TASS2$pol_orientation2 <- NA 
+TASS2$pol_orientation2[TASS2$PartyID7 == 4 | TASS2$PartyID7 == -1] = "ModerateIndependent"
+TASS2$pol_orientation2[TASS2$PartyID7 == 3 | TASS2$PartyID7 == 2 | TASS2$PartyID7 == 1] = "Liberal"
+TASS2$pol_orientation2[TASS2$PartyID7 > 4] = "Conservative"
+```
+
+
+Party Identification
+```{r, echo=FALSE}
+
+TASS2$PartyID7 <- to_factor(TASS2$PartyID7)
+TASS2$PartyID7 <- recode(TASS2$PartyID7, "-1" = "Unknown", "1" = "Strong Dem", "2" = "Moderate Dem", "3" = "Lean Dem", "4" = "Independent", "5" = "Lean Rep", "6" = "Moderate Rep", "7" = "Strong Rep")
+
+TASS2$PartyID7 <- to_factor(TASS2$PartyID7)
+TASS2$PartyID7 <- recode(TASS2$PartyID7, "-1" = "Unknown", "1" = "Strong Dem", "2" = "Moderate Dem", "3" = "Lean Dem", "4" = "Independent", "5" = "Lean Rep", "6" = "Moderate Rep", "7" = "Strong Rep")
+# First I'm assigning the table to a variable so that we can use this in a clean manner
+PID_table <- TASS2 %>%
+  group_by(PartyID7) %>% 
+  summarise(n=n()) %>% 
+  mutate(PartyID7perc = prop.table(n)*100) %>% 
+  #So kable was a table generating function; i.e. it was meant to make html tables from data so it's not what we want unless your like making a website and you want a quick table
+  #Grouping and mutating here results in the table innately. 
+  mutate_if(is.numeric, round, 2)%>% #Since we don't have the round function in Kable we round if it is numeric value
+  rename( Response =PartyID7, Frequency =  n , Percentage=PartyID7perc)#We have to manually rename the columns
+PID_table <- as.data.frame(PID_table)#I just do not like tidy so I make it a data.frame.
+PID_table
+
+#\Fill puts different colors for different values. You had (rgb=) but from what I understand that should have been three values (red saturation, green saturation, blue saturation) where you have four. Using fill will put colors in for each bar and produce a legend when used correctly. In our case we do not want a legend because we have the xaxis. For an example of use case run the code that is commented out below:
+
+#ggplot(PID_table, aes(x=Response, y = Percentage, fill = Response))+  geom_bar(stat = 'identity') +  ggtitle("Party Identification")
+
+ggplot(PID_table, aes(x=Response, y = Percentage))+
+  geom_bar(stat = 'identity', fill = 'turquoise4') + # We already have descriptive variable names so we do not need to redefine the axis labels in ggplot
+  ggtitle("Party Identification") +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6)) # angle makes it such that the x axis labels are not running into each other and vjust specifies  how far from the graph we want the labels.
+
+
+```
+
+
+Ideology 
+```{r, echo=FALSE}
+TASS2$IDEO <- to_factor(TASS2$IDEO)
+TASS2$IDEO <- recode(TASS2$IDEO, "-1" = "Unknown", "1" = "Extremely liberal", "2" = "Very liberal", "3" = "Somewhat liberal", "4" = "Moderate", "5" = "Somewhat conservative", "6" = "Very conservative", "7" = "Extremely conservative", "8" = "Haven't thought much about it")
+
+ID_table <- TASS2 %>%
+  group_by(IDEO) %>% 
+  summarise(n=n()) %>% 
+  mutate(IDEOperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =IDEO, Frequency =  n , Percentage=IDEOperc)
+ID_table <- as.data.frame(ID_table)
+ID_table # You can keep the table and plot functions in the same chunk but if you want both to display both in a pdf document that results from this file you will have to actually print the table variable
+ggplot(ID_table, aes(x=Response, y = Percentage)) +
+   geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle("Party Ideology") +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+News
+```{r, echo=FALSE}
+TASS2$QPA003B <- to_factor(TASS2$QPA003B)
+TASS2$QPA003B <- recode(TASS2$QPA003B, "1" = "Not at all", "2" = "Not very", "3" = "Somewhat", "4" = "Very", "5" = "Extremely", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+NEWS_table <- TASS2 %>%
+  group_by(QPA003B) %>% 
+  summarise(n=n()) %>% 
+  mutate(QPA003Bperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =QPA003B, Frequency =  n , Percentage=QPA003Bperc)
+NEWS_table <- as.data.frame(NEWS_table)
+NEWS_table
+ggplot(NEWS_table, aes(x=Response, y = Percentage )) +
+   geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle("How important is it to you personally to keep up with news and information?") +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+
+```
+
+Did you vote for Joe Biden and Kamala Harris with the Democrats or Donald Trump and Mike Pence for the Republicans?
+```{r, echo=FALSE}
+TASS2$VOTE20 <- to_factor(TASS2$VOTE20)
+TASS2$VOTE20 <- recode(TASS2$VOTE20, "1" = "Biden/Harris", "2" = "Trump/Pence", "3" = "3rd Party", "4" = "Didn't vote","77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+VOTE_table <- TASS2 %>%
+  group_by(VOTE20) %>% 
+  summarise(n=n()) %>% 
+  mutate(VOTE20perc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =VOTE20, Frequency =  n , Percentage=VOTE20perc)
+VOTE_table <- as.data.frame(VOTE_table)
+VOTE_table
+ggplot(VOTE_table, aes(x=Response, y = Percentage )) +
+   geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle("Who did you vote for?") +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+FACEBOOK: How much trust and confidence do you have in Facebook to appropriately handle political advertising? (overall)
+```{r, echo=FALSE}
+TASS2$ADS3_A <- to_factor(TASS2$ADS3_A)
+TASS2$ADS3_A <- recode(TASS2$ADS3_A, "1" = "A Great Deal", "2" = "A Fair Amount", "3" = "Not Very Much", "4" = "None at All", "77" = NA_character_, "98" = NA_character_, "99" = NA_character_)
+
+FB_table <- TASS2 %>%
+  group_by(ADS3_A) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS3_Aperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS3_A, Frequency =  n , Percentage=ADS3_Aperc)
+FB_table <- as.data.frame(FB_table)
+FB_table
+ggplot(FB_table, aes(x=Response, y = Percentage )) +
+   geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Trust/Confidence Facebook handle political advertising?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Facebook: How much trust and confidence do you have in Facebook to appropriately handle political advertising by political leaning
+```{r, echo=FALSE}
+#what was the actual 
+
+fbook_lean <-TASS2 %>%
+  group_by(pol_orientation2, ADS3_A) %>% # This grouping was backwards: Compare next chunk
+  summarise(n=n()) %>% 
+  mutate(ADS3_Aperc =(prop.table(n)*100)/3) %>%
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('Trust_FB' = ADS3_A, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS3_Aperc)
+fbook_lean <- as.data.frame(fbook_lean)
+fbook_lean
+ggplot(fbook_lean, aes(x=Trust_FB, y = Percentage, fill = Political_ID )) +
+   geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Trust/Confidence Facebook handle political advertising by PID") +
+  labs(fill = 'Political Ideology' ,x = 'Trust in FB') 
+
+```
+
+
+
+TWITTER
+```{r, echo=FALSE}
+TASS2$ADS3_B <- to_factor(TASS2$ADS3_B)
+TASS2$ADS3_B <- recode(TASS2$ADS3_B, "1" = "A Great Deal", "2" = "A Fair Amount", "3" = "Not Very Much", "4" = "None at All", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+twitter1 <-TASS2 %>%
+  group_by(ADS3_B) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS3_Bperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS3_B, Frequency =  n , Percentage=ADS3_Bperc)
+twitter1 <- as.data.frame(twitter1)
+twitter1
+
+ggplot(twitter1, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Trust/Confidence Twitter handle political advertising?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+TWITTER (by political lean)
+```{r, echo=FALSE}
+twitter_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS3_B) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS3_Bperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('Trust_Twitter' = ADS3_B, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS3_Bperc)
+
+ggplot(twitter_pol, aes(fill=Political_ID, y=Percentage, x=Trust_Twitter)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Trust/Confidence Facebook handle political advertising by PID") +
+  labs(fill = 'Political Ideology' ,x = 'Trust in Twitter')
+
+```
+
+
+GOOGLE
+```{r, echo=FALSE}
+TASS2$ADS3_C <- to_factor(TASS2$ADS3_C)
+TASS2$ADS3_C <- recode(TASS2$ADS3_C, "1" = "A Great Deal", "2" = "A Fair Amount", "3" = "Not Very Much", "4" = "None at All", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+GOOG_table <- TASS2 %>%
+  group_by(ADS3_C) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS3_Cperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS3_C, Frequency =  n , Percentage=ADS3_Cperc)
+# "How much trust and confidence do you have in Google to appropriately handle political advertising?"
+GOOG_table<- as.data.frame(GOOG_table)
+GOOG_table
+
+ggplot(GOOG_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Trust/Confidence Google handle political advertising?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Google, political 
+```{r, echo=FALSE}
+google_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS3_C) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS3_Cperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('Trust_Google' = ADS3_C, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS3_Cperc)
+google_pol <- as.data.frame(google_pol)
+google_pol
+
+ggplot(google_pol, aes(fill=Political_ID, y=Percentage, x=Trust_Google)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Trust/Confidence Google handle political advertising by PID") +
+  labs(fill = 'Political Ideology' ,x = 'Trust in Google') 
+```
+
+
+ADS4_A: Political ads should be removed if they contain false information.
+```{r, echo=FALSE}
+TASS2$ADS4_A <- to_factor(TASS2$ADS4_A)
+TASS2$ADS4_A <- recode(TASS2$ADS4_A, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_A_table <- TASS2 %>%
+  group_by(ADS4_A) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Aperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_A, Frequency =  n , Percentage=ADS4_Aperc)
+
+ADS4_A_table<- as.data.frame(ADS4_A_table)
+ADS4_A_table
+
+ggplot(ADS4_A_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Political ads should be removed if they contain false information.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+
+```
+
+Organized by ideology: ADS4_A: Political ads should be removed if they contain false information.
+```{r, echo=FALSE}
+ADS4_A_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_A) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Aperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('Removed_if_false' = ADS4_A, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Aperc)
+ADS4_A_pol <- as.data.frame(ADS4_A_pol)
+ADS4_A_pol
+
+ggplot(ADS4_A_pol, aes(fill=Political_ID, y=Percentage, x=Removed_if_false)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Political ads should be removed if they contain false information.") +
+  labs(fill = 'Political Ideology' ,x = 'Removed if false') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+ADS4_B: Political ads should be allowed, even if they contain misleading information. 
+```{r, echo=FALSE}
+TASS2$ADS4_B <- to_factor(TASS2$ADS4_B)
+TASS2$ADS4_B <- recode(TASS2$ADS4_B, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_B_table <- TASS2 %>%
+  group_by(ADS4_B) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Bperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_B, Frequency =  n , Percentage=ADS4_Bperc)
+
+ADS4_B_table<- as.data.frame(ADS4_B_table)
+ADS4_B_table
+
+ggplot(ADS4_B_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Political ads should be allowed, even if they contain misleading information.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS4_B: Political ads should be allowed, even if they contain misleading information. 
+```{r, echo=FALSE}
+ADS4_B_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_B) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Bperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('Allowed_if_false' = ADS4_B, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Bperc)
+ADS4_B_pol <- as.data.frame(ADS4_B_pol)
+ADS4_B_pol
+
+ggplot(ADS4_B_pol, aes(fill=Political_ID, y=Percentage, x=Allowed_if_false)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Political ads should be allowed, even if they contain misleading information.") +
+  labs(fill = 'Political Ideology' ,x = 'Allowed if false') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+ADS4_C: Political ads with false content should be allowed, but labeled with a warning.
+```{r, echo=FALSE}
+TASS2$ADS4_C <- to_factor(TASS2$ADS4_C)
+TASS2$ADS4_C <- recode(TASS2$ADS4_C, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_C_table <- TASS2 %>%
+  group_by(ADS4_C) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Cperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_C, Frequency =  n , Percentage=ADS4_Cperc)
+
+ADS4_C_table<- as.data.frame(ADS4_C_table)
+ADS4_C_table
+
+ggplot(ADS4_C_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Political ads with false content should be allowed, but labeled with a warning.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS4_C: Political ads with false content should be allowed, but labeled with a warning.
+```{r, echo=FALSE}
+ADS4_C_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_C) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Cperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('warning_label' = ADS4_C, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Cperc)
+ADS4_C_pol <- as.data.frame(ADS4_C_pol)
+ADS4_C_pol
+
+ggplot(ADS4_C_pol, aes(fill=Political_ID, y=Percentage, x=warning_label)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Political ads with false content should be allowed, but labeled with a warning.") +
+  labs(fill = 'Political Ideology' ,x = 'Warning label') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+ADS4_D: Companies should not try to label political ads as false, even if they containing misleading information.
+```{r, echo=FALSE}
+TASS2$ADS4_D <- to_factor(TASS2$ADS4_D)
+TASS2$ADS4_D <- recode(TASS2$ADS4_D, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_D_table <- TASS2 %>%
+  group_by(ADS4_D) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Dperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_D, Frequency =  n , Percentage=ADS4_Dperc)
+
+ADS4_D_table<- as.data.frame(ADS4_D_table)
+ADS4_D_table
+
+ggplot(ADS4_D_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Companies should not try to label political ads as false, even if they containing misleading information.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS4_D: Companies should not try to label political ads as false, even if they containing misleading information.
+```{r, echo=FALSE}
+ADS4_D_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_D) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Dperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('no_warning_label' = ADS4_D, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Dperc)
+ADS4_D_pol <- as.data.frame(ADS4_D_pol)
+ADS4_D_pol
+
+ggplot(ADS4_D_pol, aes(fill=Political_ID, y=Percentage, x=no_warning_label)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Companies should not try to label political ads as false, even if they containing misleading information.") +
+  labs(fill = 'Political Ideology' ,x = 'No warning label') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+ADS4_E: No political ads should be allowed at all.
+```{r, echo=FALSE}
+TASS2$ADS4_E <- to_factor(TASS2$ADS4_E)
+TASS2$ADS4_E <- recode(TASS2$ADS4_E, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_E_table <- TASS2 %>%
+  group_by(ADS4_E) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Eperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_E, Frequency =  n , Percentage=ADS4_Eperc)
+
+ADS4_E_table<- as.data.frame(ADS4_E_table)
+ADS4_E_table
+
+ggplot(ADS4_E_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('No political ads should be allowed at all.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+Organized by ideology: ADS4_E: No political ads should be allowed at all.
+```{r, echo=FALSE}
+ADS4_E_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_E) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Eperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('no_ads' = ADS4_E, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Eperc)
+ADS4_E_pol <- as.data.frame(ADS4_E_pol)
+ADS4_E_pol
+
+ggplot(ADS4_E_pol, aes(fill=Political_ID, y=Percentage, x=no_ads)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("No political ads should be allowed at all.") +
+  labs(fill = 'Political Ideology' ,x = 'No ads') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+ADS4_F: Political candidates should always be allowed to post ads without restriction.
+```{r, echo=FALSE}
+TASS2$ADS4_F <- to_factor(TASS2$ADS4_F)
+TASS2$ADS4_F <- recode(TASS2$ADS4_F, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_F_table <- TASS2 %>%
+  group_by(ADS4_F) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Fperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_F, Frequency =  n , Percentage=ADS4_Fperc)
+
+ADS4_F_table<- as.data.frame(ADS4_F_table)
+ADS4_F_table
+
+ggplot(ADS4_F_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Political candidates should always be allowed to post ads without restriction.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS4_F: Political candidates should always be allowed to post ads without restriction.
+```{r, echo=FALSE}
+ADS4_F_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_F) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Fperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('no_restriction' = ADS4_F, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Fperc)
+ADS4_F_pol <- as.data.frame(ADS4_F_pol)
+ADS4_F_pol
+
+ggplot(ADS4_F_pol, aes(fill=Political_ID, y=Percentage, x=no_restriction)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Political candidates should always be allowed to post ads without restriction.") +
+  labs(fill = 'Political Ideology' ,x = 'No restiction') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+ADS4_G: All ads on controversial topics should be removed, regardless of source.
+```{r, echo=FALSE}
+TASS2$ADS4_G <- to_factor(TASS2$ADS4_G)
+TASS2$ADS4_G <- recode(TASS2$ADS4_G, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_G_table <- TASS2 %>%
+  group_by(ADS4_G) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Gperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_G, Frequency =  n , Percentage=ADS4_Gperc)
+
+ADS4_G_table<- as.data.frame(ADS4_G_table)
+ADS4_G_table
+
+ggplot(ADS4_G_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('All ads on controversial topics should be removed, regardless of source.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS4_G: All ads on controversial topics should be removed, regardless of source.
+```{r, echo=FALSE}
+ADS4_G_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_G) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Gperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('All_removed' = ADS4_G, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Gperc)
+ADS4_G_pol <- as.data.frame(ADS4_G_pol)
+ADS4_G_pol
+
+ggplot(ADS4_G_pol, aes(fill=Political_ID, y=Percentage, x=All_removed)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("All ads on controversial topics should be removed, regardless of source.") +
+  labs(fill = 'Political Ideology' ,x = 'All removed') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+ADS4_H: Ads that encourage voting should always be permitted.
+```{r, echo=FALSE}
+TASS2$ADS4_H <- to_factor(TASS2$ADS4_H)
+TASS2$ADS4_H <- recode(TASS2$ADS4_H, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_H_table <- TASS2 %>%
+  group_by(ADS4_H) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Hperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_H, Frequency =  n , Percentage=ADS4_Hperc)
+
+ADS4_H_table<- as.data.frame(ADS4_H_table)
+ADS4_H_table
+
+ggplot(ADS4_H_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Ads that encourage voting should always be permitted.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS4_H: Ads that encourage voting should always be permitted.
+```{r, echo=FALSE}
+ADS4_H_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_H) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Hperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('voting_allowed' = ADS4_H, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Hperc)
+ADS4_H_pol <- as.data.frame(ADS4_H_pol)
+ADS4_H_pol
+
+ggplot(ADS4_H_pol, aes(fill=Political_ID, y=Percentage, x=voting_allowed)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Ads that encourage voting should always be permitted.") +
+  labs(fill = 'Political Ideology' ,x = 'Voting allowed') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+
+ADS4_I: Ads from news organizations should be exempted from regulations of political advertising.
+```{r, echo=FALSE}
+TASS2$ADS4_I <- to_factor(TASS2$ADS4_I)
+TASS2$ADS4_I <- recode(TASS2$ADS4_I, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_I_table <- TASS2 %>%
+  group_by(ADS4_I) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Iperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_I, Frequency =  n , Percentage=ADS4_Iperc)
+
+ADS4_I_table<- as.data.frame(ADS4_I_table)
+ADS4_I_table
+
+ggplot(ADS4_I_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Ads from news organizations should be exempted from regulations of political advertising.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+Organized by ideology: ADS4_I: Ads from news organizations should be exempted from regulations of political advertising.
+```{r, echo=FALSE}
+ADS4_I_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_I) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Iperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('news_exemptions' = ADS4_I, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Iperc)
+ADS4_I_pol <- as.data.frame(ADS4_I_pol)
+ADS4_I_pol
+
+ggplot(ADS4_I_pol, aes(fill=Political_ID, y=Percentage, x=news_exemptions)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Ads from news organizations should be exempted from regulations of political advertising.") +
+  labs(fill = 'Political Ideology' ,x = 'news exemptions') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+ADS4_J: Political ads from news organizations should be subject to the same regulations as ads from other sources.
+```{r, echo=FALSE}
+TASS2$ADS4_J <- to_factor(TASS2$ADS4_J)
+TASS2$ADS4_J <- recode(TASS2$ADS4_J, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_J_table <- TASS2 %>%
+  group_by(ADS4_J) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Jperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_J, Frequency =  n , Percentage=ADS4_Jperc)
+
+ADS4_J_table<- as.data.frame(ADS4_J_table)
+ADS4_J_table
+
+ggplot(ADS4_J_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Political ads from news organizations should be subject to the same regulations as ads from other sources.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS4_J: Political ads from news organizations should be subject to the same regulations as ads from other sources.
+```{r, echo=FALSE}
+ADS4_J_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_J) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Jperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('no_news_exemptions' = ADS4_J, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Jperc)
+ADS4_J_pol <- as.data.frame(ADS4_J_pol)
+ADS4_J_pol
+
+ggplot(ADS4_J_pol, aes(fill=Political_ID, y=Percentage, x=no_news_exemptions)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Ads from news organizations should be exempted from regulations of political advertising.") +
+  labs(fill = 'Political Ideology' ,x = 'no news exemptions') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+ADS4_K: Ads that discredit voting by mail should not be permitted on social media.
+```{r, echo=FALSE}
+TASS2$ADS4_K <- to_factor(TASS2$ADS4_K)
+TASS2$ADS4_K <- recode(TASS2$ADS4_K, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_K_table <- TASS2 %>%
+  group_by(ADS4_K) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Kperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_K, Frequency =  n , Percentage=ADS4_Kperc)
+
+ADS4_K_table<- as.data.frame(ADS4_K_table)
+ADS4_K_table
+
+ggplot(ADS4_K_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Ads that discredit voting by mail should not be permitted on social media.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+Organized by ideology: ADS4_K: Ads that discredit voting by mail should not be permitted on social media.
+```{r, echo=FALSE}
+ADS4_K_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_K) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Kperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('mail_vote' = ADS4_K, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Kperc)
+ADS4_K_pol <- as.data.frame(ADS4_K_pol)
+ADS4_K_pol
+
+ggplot(ADS4_K_pol, aes(fill=Political_ID, y=Percentage, x=mail_vote)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Ads that discredit voting by mail should not be permitted on social media.") +
+  labs(fill = 'Political Ideology' ,x = 'mail voting') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+ADS4_L: Political ads should include information about who paid for them.
+```{r, echo=FALSE}
+TASS2$ADS4_L <- to_factor(TASS2$ADS4_L)
+TASS2$ADS4_L <- recode(TASS2$ADS4_L, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_L_table <- TASS2 %>%
+  group_by(ADS4_L) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Lperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_L, Frequency =  n , Percentage=ADS4_Lperc)
+
+ADS4_L_table<- as.data.frame(ADS4_L_table)
+ADS4_L_table
+
+ggplot(ADS4_L_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Political ads should include information about who paid for them.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+Organized by ideology: ADS4_L: Political ads should include information about who paid for them.
+```{r, echo=FALSE}
+ADS4_L_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_L) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Lperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('funding_source' = ADS4_L, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Lperc)
+ADS4_L_pol <- as.data.frame(ADS4_L_pol)
+ADS4_L_pol
+
+ggplot(ADS4_L_pol, aes(fill=Political_ID, y=Percentage, x=funding_source)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Political ads should include information about who paid for them.") +
+  labs(fill = 'Political Ideology' ,x = 'disclose funding source') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+ADS4_M: Political advertisers should not be required to disclose their funding sources.
+```{r, echo=FALSE}
+TASS2$ADS4_M <- to_factor(TASS2$ADS4_M)
+TASS2$ADS4_M <- recode(TASS2$ADS4_M, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_M_table <- TASS2 %>%
+  group_by(ADS4_M) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Mperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_M, Frequency =  n , Percentage=ADS4_Mperc)
+
+ADS4_M_table<- as.data.frame(ADS4_M_table)
+ADS4_M_table
+
+ggplot(ADS4_M_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Political advertisers should not be required to disclose their funding sources.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+Organized by ideology: ADS4_M: Political advertisers should not be required to disclose their funding sources.
+```{r, echo=FALSE}
+ADS4_M_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_M) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Mperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('funding_source_optional' = ADS4_M, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Mperc)
+ADS4_M_pol <- as.data.frame(ADS4_M_pol)
+ADS4_M_pol
+
+ggplot(ADS4_M_pol, aes(fill=Political_ID, y=Percentage, x=funding_source_optional)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Political advertisers should not be required to disclose their funding sources.") +
+  labs(fill = 'Political Ideology' ,x = 'disclose funding source not required') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+ADS4_N: Microtargeting political ads to specific audiences based on things like age, gender, and race should not be permitted. 
+```{r, echo=FALSE}
+TASS2$ADS4_N <- to_factor(TASS2$ADS4_N)
+TASS2$ADS4_N <- recode(TASS2$ADS4_N, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_N_table <- TASS2 %>%
+  group_by(ADS4_N) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Nperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_N, Frequency =  n , Percentage=ADS4_Nperc)
+
+ADS4_N_table<- as.data.frame(ADS4_N_table)
+ADS4_N_table
+
+ggplot(ADS4_N_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Microtargeting political ads to specific audiences should not be permitted.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS4_N: Microtargeting political ads to specific audiences based on things like age, gender, and race should not be permitted. 
+```{r, echo=FALSE}
+ADS4_N_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_N) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Nperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('microtargeting_no' = ADS4_N, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Nperc)
+ADS4_N_pol <- as.data.frame(ADS4_N_pol)
+ADS4_N_pol
+
+ggplot(ADS4_N_pol, aes(fill=Political_ID, y=Percentage, x=microtargeting_no)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Microtargeting political ads to specific audiences should not be permitted.") +
+  labs(fill = 'Political Ideology' ,x = 'Microtargeting should not be allowed') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+
+ADS4_O: Political advertisers should be allowed to select who sees their ads.
+```{r, echo=FALSE}
+TASS2$ADS4_O <- to_factor(TASS2$ADS4_O)
+TASS2$ADS4_O <- recode(TASS2$ADS4_O, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_O_table <- TASS2 %>%
+  group_by(ADS4_O) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Operc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_O, Frequency =  n , Percentage=ADS4_Operc)
+
+ADS4_O_table<- as.data.frame(ADS4_O_table)
+ADS4_O_table
+
+ggplot(ADS4_O_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Political advertisers should be allowed to select who sees their ads.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS4_O: Political advertisers should be allowed to select who sees their ads.
+```{r, echo=FALSE}
+ADS4_O_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_O) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Operc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('microtargeting_yes' = ADS4_O, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Operc)
+ADS4_O_pol <- as.data.frame(ADS4_O_pol)
+ADS4_O_pol
+
+ggplot(ADS4_O_pol, aes(fill=Political_ID, y=Percentage, x=microtargeting_yes)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Political advertisers should be allowed to select who sees their ads.") +
+  labs(fill = 'Political Ideology' ,x = 'Microtargeting should be allowed') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+ADS4_P: Ads that contain misinformation about a candidate should be removed.
+```{r, echo=FALSE}
+TASS2$ADS4_P <- to_factor(TASS2$ADS4_P)
+TASS2$ADS4_P <- recode(TASS2$ADS4_P, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_P_table <- TASS2 %>%
+  group_by(ADS4_P) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Pperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_P, Frequency =  n , Percentage=ADS4_Pperc)
+
+ADS4_P_table<- as.data.frame(ADS4_P_table)
+ADS4_P_table
+
+ggplot(ADS4_P_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Ads that contain misinformation about a candidate should be removed.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS4_P: Ads that contain misinformation about a candidate should be removed.
+```{r, echo=FALSE}
+ADS4_P_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_P) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Pperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('candidate_misinfo_removed' = ADS4_P, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Pperc)
+ADS4_P_pol <- as.data.frame(ADS4_P_pol)
+ADS4_P_pol
+
+ggplot(ADS4_P_pol, aes(fill=Political_ID, y=Percentage, x=candidate_misinfo_removed)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Ads that contain misinformation about a candidate should be removed.") +
+  labs(fill = 'Political Ideology' ,x = 'Candidate misinformation should be removed') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+ADS4_Q: All ads about candidates should be allowed, even if they contain false content.
+```{r, echo=FALSE}
+TASS2$ADS4_Q <- to_factor(TASS2$ADS4_Q)
+TASS2$ADS4_Q <- recode(TASS2$ADS4_Q, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_Q_table <- TASS2 %>%
+  group_by(ADS4_Q) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Qperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_Q, Frequency =  n , Percentage=ADS4_Qperc)
+
+ADS4_Q_table<- as.data.frame(ADS4_Q_table)
+ADS4_Q_table
+
+ggplot(ADS4_Q_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('All ads about candidates should be allowed, even if they contain false content.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS4_Q: All ads about candidates should be allowed, even if they contain false content.
+```{r, echo=FALSE}
+ADS4_Q_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_Q) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Qperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('candidate_misinfo_stays' = ADS4_Q, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Qperc)
+ADS4_Q_pol <- as.data.frame(ADS4_Q_pol)
+ADS4_Q_pol
+
+ggplot(ADS4_Q_pol, aes(fill=Political_ID, y=Percentage, x=candidate_misinfo_stays)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("All ads about candidates should be allowed, even if they contain false content.") +
+  labs(fill = 'Political Ideology' ,x = 'Candidate misinformation can stay') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+ADS4_R: Companies should provide a publicly accessible database of all political ads.
+```{r, echo=FALSE}
+TASS2$ADS4_R <- to_factor(TASS2$ADS4_R)
+TASS2$ADS4_R <- recode(TASS2$ADS4_R, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_R_table <- TASS2 %>%
+  group_by(ADS4_R) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Rperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_R, Frequency =  n , Percentage=ADS4_Rperc)
+
+ADS4_R_table<- as.data.frame(ADS4_R_table)
+ADS4_R_table
+
+ggplot(ADS4_R_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Companies should provide a publicly accessible database of all political ads.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS4_R: Companies should provide a publicly accessible database of all political ads.
+```{r, echo=FALSE}
+ADS4_R_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_R) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Rperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('database' = ADS4_R, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Rperc)
+ADS4_R_pol <- as.data.frame(ADS4_R_pol)
+ADS4_R_pol
+
+ggplot(ADS4_R_pol, aes(fill=Political_ID, y=Percentage, x=database)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Companies should provide a publicly accessible database of all political ads.") +
+  labs(fill = 'Political Ideology' ,x = 'database') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+
+ADS4_S: Ads about candidates or upcoming elections should be banned, but ads about social issues (e.g., guns or abortion) should still be allowed.
+```{r, echo=FALSE}
+TASS2$ADS4_S <- to_factor(TASS2$ADS4_S)
+TASS2$ADS4_S <- recode(TASS2$ADS4_S, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_S_table <- TASS2 %>%
+  group_by(ADS4_S) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Sperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_S, Frequency =  n , Percentage=ADS4_Sperc)
+
+ADS4_S_table<- as.data.frame(ADS4_S_table)
+ADS4_S_table
+
+ggplot(ADS4_S_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Ads about candidates or upcoming elections should be banned, but ads about social issues should still be allowed.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS4_S: Ads about candidates or upcoming elections should be banned, but ads about social issues (e.g., guns or abortion) should still be allowed.
+```{r, echo=FALSE}
+ADS4_S_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_S) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Sperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('some_ads_banned' = ADS4_S, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Sperc)
+ADS4_S_pol <- as.data.frame(ADS4_S_pol)
+ADS4_S_pol
+
+ggplot(ADS4_S_pol, aes(fill=Political_ID, y=Percentage, x=some_ads_banned)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Ads about candidates or upcoming elections should be banned, but ads about social issues should still be allowed.") +
+  labs(fill = 'Political Ideology' ,x = 'Some ads banned') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+ADS4_T: Ads from certain sources like political action committees (PACs) and dark money organizations should be banned.
+```{r, echo=FALSE}
+TASS2$ADS4_T <- to_factor(TASS2$ADS4_T)
+TASS2$ADS4_T <- recode(TASS2$ADS4_T, "1" = "Strongly Agr.", "2" = "Agree", "3" = "Slightly Agr.", "4" = "Slightly Dis.", "5" = "Disagree", "6" = "Strongly Dis.", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS4_T_table <- TASS2 %>%
+  group_by(ADS4_T) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Tperc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS4_T, Frequency =  n , Percentage=ADS4_Tperc)
+
+ADS4_T_table<- as.data.frame(ADS4_T_table)
+ADS4_T_table
+
+ggplot(ADS4_T_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Ads from certain sources like PACs and dark money organizations should be banned.') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS4_T: Ads from certain sources like political action committees (PACs) and dark money organizations should be banned.
+```{r, echo=FALSE}
+ADS4_T_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS4_T) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Tperc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('PAC_ads_banned' = ADS4_T, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS4_Tperc)
+ADS4_T_pol <- as.data.frame(ADS4_T_pol)
+ADS4_T_pol
+
+ggplot(ADS4_T_pol, aes(fill=Political_ID, y=Percentage, x=PAC_ads_banned)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Ads from certain sources like PACs and dark money organizations should be banned..") +
+  labs(fill = 'Political Ideology' ,x = 'PAC & dark money ads banned') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+Ads:Do you think that Facebook should allow ads like this?
+
+ADS5
+```{r, echo=FALSE}
+knitr::include_graphics("8557_AD_IMAGE_1.PNG")
+
+TASS2$ADS5 <- to_factor(TASS2$ADS5)
+TASS2$ADS5 <- recode(TASS2$ADS5, "1" = "Definitely", "2" = "Probably", "3" = "Probably not", "4" = "Definitely not", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS5_table <- TASS2 %>%
+  group_by(ADS5) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS5perc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS5, Frequency =  n , Percentage=ADS5perc)
+
+ADS5_table<- as.data.frame(ADS5_table)
+ADS5_table
+
+ggplot(ADS5_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Do you think that Facebook should allow ads like this?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+Organized by ideology: ADS5
+```{r}
+ADS5_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS5) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS5perc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('ADS5_allow' = ADS5, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS5perc)
+ADS5_pol <- as.data.frame(ADS5_pol)
+ADS5_pol
+
+ggplot(ADS5_pol, aes(fill=Political_ID, y=Percentage, x=ADS5_allow)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Do you think that Facebook should allow ads like this?") +
+  labs(fill = 'Political Ideology' ,x = 'Should Antifa ad be allowed?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+ADS6
+```{r, echo=FALSE}
+knitr::include_graphics("8557_AD_IMAGE_2.PNG")
+
+TASS2$ADS6 <- to_factor(TASS2$ADS6)
+TASS2$ADS6 <- recode(TASS2$ADS6, "1" = "Definitely", "2" = "Probably", "3" = "Probably not", "4" = "Definitely not", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS6_table <- TASS2 %>%
+  group_by(ADS6) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS6perc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS6, Frequency =  n , Percentage=ADS6perc)
+
+ADS6_table<- as.data.frame(ADS6_table)
+ADS6_table
+
+ggplot(ADS6_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Should Facebook allow ads like this?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+Organized by ideology: ADS6
+```{r, echo=FALSE}
+ADS6_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS6) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS6perc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('ADS6_allow' = ADS6, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS6perc)
+ADS6_pol <- as.data.frame(ADS6_pol)
+ADS6_pol
+
+ggplot(ADS6_pol, aes(fill=Political_ID, y=Percentage, x=ADS6_allow)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Do you think that Facebook should allow ads like this?") +
+  labs(fill = 'Political Ideology' ,x = 'Should defund the police ad be allowed?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+ADS7
+```{r, echo=FALSE}
+knitr::include_graphics("8557_AD_IMAGE_3.PNG")
+
+TASS2$ADS7 <- to_factor(TASS2$ADS7)
+TASS2$ADS7 <- recode(TASS2$ADS7, "1" = "Definitely", "2" = "Probably", "3" = "Probably not", "4" = "Definitely not", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS7_table <- TASS2 %>%
+  group_by(ADS7) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS7perc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS7, Frequency =  n , Percentage=ADS7perc)
+
+ADS7_table<- as.data.frame(ADS7_table)
+ADS7_table
+
+ggplot(ADS7_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Should Facebook allow ads like this?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS7
+```{r, echo=FALSE}
+ADS7_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS7) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS7perc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('ADS7_allow' = ADS7, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS7perc)
+ADS7_pol <- as.data.frame(ADS7_pol)
+ADS7_pol
+
+ggplot(ADS7_pol, aes(fill=Political_ID, y=Percentage, x=ADS7_allow)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Do you think that Facebook should allow ads like this?") +
+  labs(fill = 'Political Ideology' ,x = 'Should ads opposing mail in ballots be allowed?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+ADS8
+```{r, echo=FALSE}
+knitr::include_graphics("8557_AD_IMAGE_4.PNG")
+
+TASS2$ADS8 <- to_factor(TASS2$ADS8)
+TASS2$ADS8 <- recode(TASS2$ADS8, "1" = "Definitely", "2" = "Probably", "3" = "Probably not", "4" = "Definitely not", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS8_table <- TASS2 %>%
+  group_by(ADS8) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS8perc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS8, Frequency =  n , Percentage=ADS8perc)
+
+ADS8_table<- as.data.frame(ADS8_table)
+ADS8_table
+
+ggplot(ADS8_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Should Facebook allow ads like this?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+Organized by ideology: ADS8
+```{r, echo=FALSE}
+ADS8_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS8) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS8perc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('ADS8_allow' = ADS8, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS8perc)
+ADS8_pol <- as.data.frame(ADS8_pol)
+ADS8_pol
+
+ggplot(ADS8_pol, aes(fill=Political_ID, y=Percentage, x=ADS8_allow)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Do you think that Facebook should allow ads like this?") +
+  labs(fill = 'Political Ideology' ,x = 'Should voter registration ads be allowed?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+ADS9
+```{r, echo=FALSE}
+knitr::include_graphics("8557_AD_IMAGE_5.PNG")
+
+TASS2$ADS9 <- to_factor(TASS2$ADS9)
+TASS2$ADS9 <- recode(TASS2$ADS9, "1" = "Definitely", "2" = "Probably", "3" = "Probably not", "4" = "Definitely not", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS9_table <- TASS2 %>%
+  group_by(ADS9) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS9perc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS9, Frequency =  n , Percentage=ADS9perc)
+
+ADS9_table<- as.data.frame(ADS9_table)
+ADS9_table
+
+ggplot(ADS9_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Should Facebook allow ads like this?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS9
+```{r, echo=FALSE}
+ADS9_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS9) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS9perc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('ADS9_allow' = ADS9, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS9perc)
+ADS9_pol <- as.data.frame(ADS9_pol)
+ADS9_pol
+
+ggplot(ADS9_pol, aes(fill=Political_ID, y=Percentage, x=ADS9_allow)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Do you think that Facebook should allow ads like this?") +
+  labs(fill = 'Political Ideology' ,x = 'Should ads in Spanish that encourage voter registeration be allowed?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+ADS11
+```{r, echo=FALSE}
+knitr::include_graphics("8557_AD_IMAGE_7.PNG")
+
+TASS2$ADS11 <- to_factor(TASS2$ADS11)
+TASS2$ADS11 <- recode(TASS2$ADS11, "1" = "Definitely", "2" = "Probably", "3" = "Probably not", "4" = "Definitely not", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS11_table <- TASS2 %>%
+  group_by(ADS11) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS11perc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS11, Frequency =  n , Percentage=ADS11perc)
+
+ADS11_table<- as.data.frame(ADS11_table)
+ADS11_table
+
+ggplot(ADS11_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Should Facebook allow ads like this?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+Organized by ideology: ADS11
+```{r, echo=FALSE}
+ADS11_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS11) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS11perc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('ADS11_allow' = ADS11, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS11perc)
+ADS11_pol <- as.data.frame(ADS11_pol)
+ADS11_pol
+
+ggplot(ADS11_pol, aes(fill=Political_ID, y=Percentage, x=ADS11_allow)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Do you think that Facebook should allow ads like this?") +
+  labs(fill = 'Political Ideology' ,x = 'Should impeachment ads be allowed?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+ADS12
+```{r, echo=FALSE}
+knitr::include_graphics("8557_AD_IMAGE_8.PNG")
+
+TASS2$ADS12 <- to_factor(TASS2$ADS12)
+TASS2$ADS12 <- recode(TASS2$ADS12, "1" = "Definitely", "2" = "Probably", "3" = "Probably not", "4" = "Definitely not", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+ADS12_table <- TASS2 %>%
+  group_by(ADS12) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS12perc = prop.table(n)*100) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename( Response =ADS12, Frequency =  n , Percentage=ADS12perc)
+
+ADS12_table<- as.data.frame(ADS12_table)
+ADS12_table
+
+ggplot(ADS12_table, aes(x=as.factor(Response), y= Percentage)) +
+  geom_bar(stat = 'identity', fill = 'turquoise4') + 
+  ggtitle('Should Facebook allow ads like this?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+Organized by ideology: ADS12
+```{r, echo=FALSE}
+ADS12_pol <-TASS2 %>%
+  group_by(pol_orientation2,ADS12) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS12perc =(prop.table(n)*100)/3) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  rename('ADS12_allow' = ADS12, 'Political_ID' = pol_orientation2,'Frequency' =n,'Percentage'=ADS12perc)
+ADS12_pol <- as.data.frame(ADS12_pol)
+ADS12_pol
+
+ggplot(ADS12_pol, aes(fill=Political_ID, y=Percentage, x=ADS12_allow)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  ggtitle("Do you think that Facebook should allow ads like this?") +
+  labs(fill = 'Political Ideology' ,x = 'Should second ad oposing Antifa be allowed?') +
+  theme(axis.text.x = element_text(angle = 45, vjust =.6))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

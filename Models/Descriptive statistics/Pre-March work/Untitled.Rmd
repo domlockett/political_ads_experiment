@@ -1,0 +1,174 @@
+---
+title: "TASS2"
+author: "Celia Guillard"
+date: "1/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+## clear workspace environment
+rm(list=ls())
+
+####================= Necessary Packages and Functions ======================
+if (!require(lme4)) {install.packages("lme4"); require(lme4)}
+if (!require(dplyr)) {install.packages("dplyr"); require(dplyr)}
+if (!require(tidyr)) {install.packages("tidyr"); require(tidyr)}
+if (!require(lmerTest)) {install.packages("lmerTest"); require(lmerTest)}
+if (!require(emmeans)) {install.packages("emmeans"); require(coin)}
+if (!require(psych)) {install.packages("psych"); require(psych)}
+if (!require(ggstatsplot)) {install.packages("ggstatsplot"); require(ggstatsplot)}
+if (!require(ggplot2)) {install.packages("ggplot2"); require(ggplot2)}
+
+stderr <- function(x) sd(x)/sqrt(length(x))
+op <- par(mfrow=c(1,1))
+```
+
+Confirm working directory 
+```{r}
+getwd()
+
+```
+
+Get data 
+```{r}
+TASS2 <- read.csv(file = '8557_WUSTL-Weidenbaum05_Redacted.csv', header = TRUE, stringsAsFactors = FALSE)
+
+head(TASS2)
+
+```
+
+
+What are the questions we are asking? Want to group the questions into scales? See how they relate to demographics?
+
+
+
+ITEMS:
+
+Tech Companies:
+
+ADS3_A: [Facebook] How much trust and confidence do you have in the following companies to appropriately handle political advertising?
+ADS3_B: Twitter
+ADS3_C: Google
+
+
+Scale:
+1	A great deal
+2	A fair amount
+3	Not very much
+4	None at all
+77	DON'T KNOW
+98	SKIPPED ON WEB
+99	REFUSED
+
+Political Ads: 
+ 
+ADS4_A: Political ads should be removed if they contain false information.
+
+ADS4_B: Political ads should be allowed, even if they contain misleading information. 
+
+ADS4_C: Political ads with false content should be allowed, but labeled with a warning.
+
+ADS4_D: Companies should not try to label political ads as false, even if they containing misleading information.
+
+ADS4_E: No political ads should be allowed at all.
+
+ADS4_F: Political candidates should always be allowed to post ads without restriction.
+
+ADS4_G: All ads on controversial topics should be removed, regardless of source.
+
+ADS4_H: Ads that encourage voting should always be permitted.
+
+ADS4_I: Ads that encourage voting should always be permitted.
+
+ADS4_I: Ads from news organizations should be exempted from regulations of political advertising.
+
+ADS4_J: Political ads from news organizations should be subject to the same regulations as ads from other sources.
+
+ADS4_K: Ads that discredit voting by mail should not be permitted on social media.
+
+ADS4_L: Political ads should include information about who paid for them.
+
+ADS4_M: Political advertisers should not be required to disclose their funding sources.
+
+ADS4_N: Microtargeting political ads to specific audiences based on things like age, gender, and race should not be permitted. 
+
+ADS4_O: Political advertisers should be allowed to select who sees their ads.
+
+ADS4_P: Ads that contain misinformation about a candidate should be removed.
+
+ADS4_Q: All ads about candidates should be allowed, even if they contain false content.
+
+ADS4_R: Companies should provide a publicly accessible database of all political ads.
+
+ADS4_S: Ads about candidates or upcoming elections should be banned, but ads about social issues (e.g., guns or abortion) should still be allowed.
+
+ADS4_T: Ads from certain sources like political action committees (PACs) and dark money organizations should be banned.
+
+Scale: 1	Strongly agree
+2	Agree
+3	Agree only a little
+4	Disagree only a little
+5	Disagree
+6	Strongly disagree
+77	DON'T KNOW
+98	SKIPPED ON WEB
+99	REFUSED
+
+
+Ads:Do you think that Facebook should allow ads like this?
+
+ADS5
+```{r}
+knitr::include_graphics("8557_AD_IMAGE_1.PNG")
+```
+
+ADS6
+```{r}
+knitr::include_graphics("8557_AD_IMAGE_2.PNG")
+```
+
+ADS7
+```{r}
+knitr::include_graphics("8557_AD_IMAGE_3.PNG")
+```
+
+ADS8
+```{r}
+knitr::include_graphics("8557_AD_IMAGE_4.PNG")
+```
+
+ADS9
+```{r}
+knitr::include_graphics("8557_AD_IMAGE_5.PNG")
+```
+
+ADS11
+```{r}
+knitr::include_graphics("8557_AD_IMAGE_7.PNG")
+```
+
+ADS12
+```{r}
+knitr::include_graphics("8557_AD_IMAGE_8.PNG")
+```
+
+
+Scale: 
+1	Definitely allow
+2	Probably allow
+3	Probably not allow
+4	Definitely not allow
+77	DON'T KNOW
+98	SKIPPED ON WEB
+99	REFUSED
+
+
+
+
+
+
+
+
+

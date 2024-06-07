@@ -1,0 +1,72 @@
+---
+title: "Test Assignment"
+author: 
+date: 
+output: pdf_document
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(include = T)
+library(stringr)
+library(radiant)
+library(tidyverse)
+library(readxl)
+library(prefmod)
+library(readxl)
+newxp <- read_excel('C:/Users/dl0ck/OneDrive/Spring 2021/PolAdsTransparency/politics_user_study/Experiments/Conjoint Analysis/pimages.xlsx')
+newlong <- gather(newxp, image_set, image_data, P_IMAGE1A, P_IMAGE1B, P_IMAGE2A, P_IMAGE2B, P_IMAGE3A, P_IMAGE3B, P_IMAGE4A, P_IMAGE4B,P_IMAGE5A,P_IMAGE5B,P_IMAGE6A,P_IMAGE6B,P_IMAGE7A,P_IMAGE7B,P_IMAGE8A,P_IMAGE8B)
+newlong <- as.data.frame(newlong)
+newxp <- as.data.frame(newxp)
+```
+
+## Profiles
+
+```{r echo=TRUE}
+length(unique(newlong$image_data))
+```
+
+
+## Distribution of profiles
+```{r echo=TRUE}
+print(sort(table(newlong$image_data)))
+
+print(table(sort(newlong$image_data)))
+```
+
+## Pairwise check: For each row make sure no 2 comparisons are the same i.e. P_IMAGE8A != P_IMAGE8B
+```{r echo=TRUE}
+results <-data.frame(matrix(nrow=nrow(newxp),ncol=8))
+colnames(results) <- c('Set 1', 'Set 2','Set 3','Set 4','Set 5','Set 6','Set 7','Set 8')
+cols<-c()
+dup <- c()
+for(i in 1:nrow(newxp)){
+  dup <- c()
+  for(j in 1:8){
+    cols <- cbind(paste0('P_IMAGE',j,'A'),paste0('P_IMAGE',j,'B'))
+    dup <- cbind(dup,duplicated(newxp[i,cols]))
+  }
+  results[i,]<-dup
+}
+head(results)
+sum(results==T)
+```
+
+
+## Columnwis check: See how many times each profile occurs per column
+
+
+```{r echo=TRUE}
+df <- as.data.frame(matrix(nrow=17,ncol=9))
+colnames(df) <- 13:21
+for(i in 1:17){
+  hold <- as.data.frame(table(table(newxp[,i])))
+  for( j in hold$Var1){
+  df[i, c(which(colnames(df)== j))] <- hold$Freq[hold$Var1 == j]
+  }
+}
+print(sum(unique(newfx[,i])))
+ print(colnames(newxp)[i])
+ print(table(table(newxp[,i])))
+  
+  
+  ```

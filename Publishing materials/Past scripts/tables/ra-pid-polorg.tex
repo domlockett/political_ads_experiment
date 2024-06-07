@@ -1,0 +1,42 @@
+
+\begin{table}[h!]
+\caption{Effect of exposure to ads with high or low political content on perceived politicalness of ads: politicians and organizations}
+\begin{center}
+\begin{footnotesize}
+\begin{tabular}{l D{.}{.}{4.5} D{.}{.}{4.5} D{.}{.}{4.5} D{.}{.}{4.5}}
+\toprule
+ & \multicolumn{2}{c}{Politicians} & \multicolumn{2}{c}{Organizations} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+ & \multicolumn{1}{c}{Biden ads} & \multicolumn{1}{c}{Trump ads} & \multicolumn{1}{c}{Power ads} & \multicolumn{1}{c}{Sierra ads} \\
+\midrule
+Biden political ad                     & 0.59^{***} &             &             &            \\
+                                       & (0.10)     &             &             &            \\
+Trump political ad                     &            & 0.98^{***}  &             &            \\
+                                       &            & (0.10)      &             &            \\
+Power political ad                     &            &             & 0.77^{***}  &            \\
+                                       &            &             & (0.09)      &            \\
+Sierra political ad                    &            &             &             & 1.48^{***} \\
+                                       &            &             &             & (0.09)     \\
+Republican                             & 0.34^{**}  & -0.64^{***} & -0.37^{***} & 0.18       \\
+                                       & (0.12)     & (0.13)      & (0.09)      & (0.11)     \\
+Biden political ad × Republican prior  & 0.14       &             &             &            \\
+                                       & (0.15)     &             &             &            \\
+Trump political ad × Republican prior  &            & 0.21        &             &            \\
+                                       &            & (0.15)      &             &            \\
+Power political ad × Republican prior  &            &             & 0.12        &            \\
+                                       &            &             & (0.13)      &            \\
+Sierra political ad × Republican prior &            &             &             & -0.08      \\
+                                       &            &             &             & (0.14)     \\
+\midrule
+R$^2$                                  & 0.11       & 0.23        & 0.16        & 0.30       \\
+Adj. R$^2$                             & 0.11       & 0.23        & 0.16        & 0.30       \\
+Num. obs.                              & 1666       & 1665        & 1661        & 1660       \\
+RMSE                                   & 1.05       & 1.11        & 1.00        & 1.08       \\
+N Clusters                             & 1666       & 1665        & 1661        & 1660       \\
+\bottomrule
+\multicolumn{5}{l}{\tiny{$^{***}p<0.001$; $^{**}p<0.01$; $^{*}p<0.05$}}
+\end{tabular}
+\end{footnotesize}
+\label{table:ra-pid-polorg}
+\end{center}
+\end{table} 

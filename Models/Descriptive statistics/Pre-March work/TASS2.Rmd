@@ -1,0 +1,818 @@
+---
+title: "TASS2"
+author: "Celia Guillard"
+date: "1/9/2021"
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(dplyr)
+library(magrittr)
+library(knitr)
+library(ggplot2)
+library(labelled)
+library(haven)
+
+```
+
+Confirm working directory 
+```{r, echo=FALSE}
+getwd()
+
+```
+
+Get data 
+```{r, echo=FALSE}
+TASS2 <- read.csv(file = '8557_WUSTL-Weidenbaum05_Redacted.csv', header = TRUE, stringsAsFactors = FALSE)
+
+```
+
+
+
+Demographics:
+
+
+Party Identification
+```{r, echo=FALSE}
+TASS2$PartyID7 <- to_factor(TASS2$PartyID7)
+TASS2$PartyID7 <- recode(TASS2$PartyID7, "-1" = "Unknown", "1" = "Strong Democrat", "2" = "Moderate Democrat", "3" = "Lean Democrat", "4" = "Don't Lean/Independent/None", "5" = "Lean Republican", "6" = "Moderate Republican", "7" = "Strong Republican")
+
+TASS2 %>%
+  group_by(PartyID7) %>% 
+  summarise(n=n()) %>% 
+  mutate(PartyID7perc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Party Identification",col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = PartyID7, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Party Identification")
+```
+
+
+tabulator
+
+New variable to filter by ideology
+```{r, echo=FALSE}
+
+TASS2 <- TASS2 %>%
+mutate(pol_orientation = ifelse(IDEO = -1, "unknown", IDEO = 1,2,3, "liberal", IDEO = 4, "moderate", IDEO = 5,6,7, "conservative"))
+
+```
+
+Ignore
+```{r}
+Females<-hw2_fact%>% 
+ filter(sex=="Female")%>% 
+  summarise(n=n())
+
+ FemalesVH<-hw2_fact%>%
+ filter(sex == "Female")%>% 
+ filter(happy == "Very Happy") %>% 
+   summarise(n=n()) %>% 
+FemalePercent<-FemalesVH/Females*100
+kable(FemalePercent, digits=2, caption = "Percentage of all women who are Very Happy")
+```
+
+
+TEST TEST TEST FILTER
+```{r, echo=FALSE}
+TASS2$ADS3_A <- to_factor(TASS2$ADS3_A)
+TASS2$ADS3_A <- recode(TASS2$ADS3_A, "1" = "A Great Deal", "2" = "A Fair Amount", "3" = "Not Very Much", "4" = "None at All", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+
+TASS2$PartyID7 <- recode(TASS2$PartyID7, "-1" = "Unknown", "1" = "Strong Democrat", "2" = "Moderate Democrat", "3" = "Lean Democrat", "4" = "Don't Lean/Independent/None", "5" = "Lean Republican", "6" = "Moderate Republican", "7" = "Strong Republican")
+
+
+ TASS2 %>%
+  group_by(ADS3_A) %>% 
+  filter(PartyID7 ==  "Strong Democrat" | PartyID7 == "Moderate Democrat"| PartyID7 == "Lean Democrat")
+ summarise(n=n()) %>% 
+ mutate(ADS3_Aperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Facebook, liberals",col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+ geom_bar(mapping = aes(x = ADS3_A, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+ xlab("Response") +
+ ylab("Percentage") +
+ggtitle("How much trust and confidence do you have in Facebook to appropriately handle political advertising?")
+
+
+```
+
+```{r, echo=FALSE}
+TASS2 %>% 
+  group_by(ADS3_A, PartyID7) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS3_Aperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Facebook, liberals")
+
+
+plot(table(TASS2$PartyID7,TASS2$ADS3_A))
+
+```
+
+Ideology 
+```{r, echo=FALSE}
+TASS2$IDEO <- to_factor(TASS2$IDEO)
+TASS2$IDEO <- recode(TASS2$IDEO, "-1" = "Unknown", "1" = "Extremely liberal", "2" = "Very liberal", "3" = "Somewhat liberal", "4" = "Moderate", "5" = "Somewhat conservative", "6" = "Very conservativen", "7" = "Extremely conservative", "8" = "Haven't thought much about it")
+
+TASS2 %>%
+  group_by(IDEO) %>% 
+  summarise(n=n()) %>% 
+  mutate(IDEOperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Ideology",col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = IDEO, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Ideology")
+```
+
+
+
+News
+```{r, echo=FALSE}
+TASS2$QPA003B <- to_factor(TASS2$QPA003B)
+TASS2$QPA003B <- recode(TASS2$QPA003B, "1" = "Not at all important", "2" = "Not very important", "3" = "Somewhat important", "4" = "Very important", "5" = "Extremely important","77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(QPA003B) %>% 
+  summarise(n=n()) %>% 
+  mutate(QPA003Bperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "How important is it to you personally to keep up with news and information?",col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = QPA003B, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("How important is it to you personally to keep up with news and information?")
+```
+
+Did you vote for Joe Biden and Kamala Harris with the Democrats or Donald Trump and Mike Pence for the Republicans?
+```{r, echo=FALSE}
+TASS2$VOTE20 <- to_factor(TASS2$VOTE20)
+TASS2$VOTE20 <- recode(TASS2$VOTE20, "1" = "Biden/Harris", "2" = "Trump/Pence", "3" = "Another candidate", "4" = "Did not vote for president","77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(VOTE20) %>% 
+  summarise(n=n()) %>% 
+  mutate(VOTE20perc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Who did you vote for?",col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = VOTE20, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Who did you vote for?")
+```
+
+
+FACEBOOK
+```{r, echo=FALSE}
+TASS2$ADS3_A <- to_factor(TASS2$ADS3_A)
+TASS2$ADS3_A <- recode(TASS2$ADS3_A, "1" = "A Great Deal", "2" = "A Fair Amount", "3" = "Not Very Much", "4" = "None at All", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS3_A) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS3_Aperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "How much trust and confidence do you have in Facebook to appropriately handle political advertising?",col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS3_A, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("How much trust and confidence do you have in Facebook to appropriately handle political advertising?")
+```
+
+
+TWITTER
+```{r, echo=FALSE}
+TASS2$ADS3_B <- to_factor(TASS2$ADS3_B)
+TASS2$ADS3_B <- recode(TASS2$ADS3_B, "1" = "A Great Deal", "2" = "A Fair Amount", "3" = "Not Very Much", "4" = "None at All", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS3_B) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS3_Bperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "How much trust and confidence do you have in Twitter to appropriately handle political advertising?",col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS3_B, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("How much trust and confidence do you have in Twitter to appropriately handle political advertising?")
+```
+
+
+
+GOOGLE
+```{r, echo=FALSE}
+TASS2$ADS3_C <- to_factor(TASS2$ADS3_C)
+TASS2$ADS3_C <- recode(TASS2$ADS3_C, "1" = "A Great Deal", "2" = "A Fair Amount", "3" = "Not Very Much", "4" = "None at All", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS3_C) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS3_Cperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "How much trust and confidence do you have in Google to appropriately handle political advertising?",col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS3_C, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("How much trust and confidence do you have in Google to appropriately handle political advertising?")
+```
+
+
+POLITICAL ADS
+
+Scale: 1	Strongly agree
+2	Agree
+3	Agree only a little (edited to "Slightly Agree" in analyses to fit graphs)
+4	Disagree only a little (edited to "Slightly Disagree" in analyses to fit graphs)
+5	Disagree
+6	Strongly disagree
+77	DON'T KNOW
+98	SKIPPED ON WEB
+99	REFUSED
+
+
+ADS4_A: Political ads should be removed if they contain false information.
+```{r, echo=FALSE}
+TASS2$ADS4_A <- to_factor(TASS2$ADS4_A)
+TASS2$ADS4_A <- recode(TASS2$ADS4_A, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_A) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Aperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Political ads should be removed if they contain false information.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_A, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Political ads should be removed if they contain false information.")
+```
+
+
+ADS4_B: Political ads should be allowed, even if they contain misleading information. 
+```{r, echo=FALSE}
+TASS2$ADS4_B <- to_factor(TASS2$ADS4_B)
+TASS2$ADS4_B <- recode(TASS2$ADS4_B, "1" = "Strongly Agree", "2" = "Agree", "3" = "Agree only a little", "4" = "Disagree only a little", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_B) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Bperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Political ads should be allowed, even if they contain misleading information.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_B, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Political ads should be allowed, even if they contain misleading information. ")
+```
+
+
+
+ADS4_C: Political ads with false content should be allowed, but labeled with a warning.
+```{r, echo=FALSE}
+TASS2$ADS4_C <- to_factor(TASS2$ADS4_C)
+TASS2$ADS4_C <- recode(TASS2$ADS4_C, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_C) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Cperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Political ads with false content should be allowed, but labeled with a warning.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_C, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Political ads with false content should be allowed, but labeled with a warning.")
+```
+
+
+
+ADS4_D: Companies should not try to label political ads as false, even if they containing misleading information.
+```{r, echo=FALSE}
+TASS2$ADS4_D <- to_factor(TASS2$ADS4_D)
+TASS2$ADS4_D <- recode(TASS2$ADS4_D, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_D) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Dperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Companies should not try to label political ads as false, even if they contain misleading information.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_D, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Companies should not try to label political ads as false, even if they contain misleading information.")
+```
+
+ADS4_E: No political ads should be allowed at all.
+```{r, echo=FALSE}
+TASS2$ADS4_E <- to_factor(TASS2$ADS4_E)
+TASS2$ADS4_E <- recode(TASS2$ADS4_E, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_E) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Eperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "No political ads should be allowed at all.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_E, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("No political ads should be allowed at all.")
+```
+
+
+ADS4_F: Political candidates should always be allowed to post ads without restriction.
+```{r, echo=FALSE}
+TASS2$ADS4_F <- to_factor(TASS2$ADS4_F)
+TASS2$ADS4_F <- recode(TASS2$ADS4_F, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_F) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Fperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Political candidates should always be allowed to post ads without restriction.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_F, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Political candidates should always be allowed to post ads without restriction.")
+```
+
+ADS4_G: All ads on controversial topics should be removed, regardless of source.
+```{r, echo=FALSE}
+TASS2$ADS4_G <- to_factor(TASS2$ADS4_G)
+TASS2$ADS4_G <- recode(TASS2$ADS4_G, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_G) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Gperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "All ads on controversial topics should be removed, regardless of source.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_G, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("All ads on controversial topics should be removed, regardless of source.")
+```
+
+ADS4_H: Ads that encourage voting should always be permitted.
+```{r, echo=FALSE}
+TASS2$ADS4_H <- to_factor(TASS2$ADS4_H)
+TASS2$ADS4_H <- recode(TASS2$ADS4_H, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_H) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Hperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Ads that encourage voting should always be permitted.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_H, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Ads that encourage voting should always be permitted.")
+```
+
+
+ADS4_I: Ads from news organizations should be exempted from regulations of political advertising.
+```{r, echo=FALSE}
+TASS2$ADS4_I <- to_factor(TASS2$ADS4_I)
+TASS2$ADS4_I <- recode(TASS2$ADS4_I, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_I) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Iperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Ads from news organizations should be exempted from regulations of political advertising.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_I, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Ads from news organizations should be exempted from regulations of political advertising.")
+```
+
+
+ADS4_J: Political ads from news organizations should be subject to the same regulations as ads from other sources.
+```{r, echo=FALSE}
+TASS2$ADS4_J <- to_factor(TASS2$ADS4_J)
+TASS2$ADS4_J <- recode(TASS2$ADS4_J, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_J) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Jperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Political ads from news organizations should be subject to the same regulations as ads from other sources.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_J, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Political ads from news organizations should be subject to the same regulations as ads from other sources.")
+```
+
+ADS4_K: Ads that discredit voting by mail should not be permitted on social media.
+```{r, echo=FALSE}
+TASS2$ADS4_K <- to_factor(TASS2$ADS4_K)
+TASS2$ADS4_K <- recode(TASS2$ADS4_K, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_K) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Kperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Ads that discredit voting by mail should not be permitted on social media.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_K, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Ads that discredit voting by mail should not be permitted on social media.")
+```
+
+
+ADS4_L: Political ads should include information about who paid for them.
+```{r, echo=FALSE}
+TASS2$ADS4_L <- to_factor(TASS2$ADS4_L)
+TASS2$ADS4_L <- recode(TASS2$ADS4_L, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_L) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Lperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Political ads should include information about who paid for them.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_L, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Political ads should include information about who paid for them.")
+```
+
+ADS4_M: Political advertisers should not be required to disclose their funding sources.
+```{r, echo=FALSE}
+TASS2$ADS4_M <- to_factor(TASS2$ADS4_M)
+TASS2$ADS4_M <- recode(TASS2$ADS4_M, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_M) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Mperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Political advertisers should not be required to disclose their funding sources.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_M, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Political advertisers should not be required to disclose their funding sources.")
+```
+
+ADS4_N: Microtargeting political ads to specific audiences based on things like age, gender, and race should not be permitted. 
+```{r, echo=FALSE}
+TASS2$ADS4_N <- to_factor(TASS2$ADS4_N)
+TASS2$ADS4_N <- recode(TASS2$ADS4_N, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_N) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Nperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Microtargeting political ads to specific audiences based on things like age, gender, and race should not be permitted. ", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_N, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Microtargeting political ads to specific audiences based on things like age, gender, and race should not be permitted.")
+```
+
+ADS4_O: Political advertisers should be allowed to select who sees their ads.
+```{r, echo=FALSE}
+TASS2$ADS4_O <- to_factor(TASS2$ADS4_O)
+TASS2$ADS4_O <- recode(TASS2$ADS4_O, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_O) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Operc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Political advertisers should be allowed to select who sees their ads.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_O, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Political advertisers should be allowed to select who sees their ads.")
+```
+
+ADS4_P: Ads that contain misinformation about a candidate should be removed.
+```{r, echo=FALSE}
+TASS2$ADS4_P <- to_factor(TASS2$ADS4_P)
+TASS2$ADS4_P <- recode(TASS2$ADS4_P, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_P) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Pperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Ads that contain misinformation about a candidate should be removed.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_P, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Ads that contain misinformation about a candidate should be removed.")
+```
+
+ADS4_Q: All ads about candidates should be allowed, even if they contain false content.
+```{r, echo=FALSE}
+TASS2$ADS4_Q <- to_factor(TASS2$ADS4_Q)
+TASS2$ADS4_Q <- recode(TASS2$ADS4_Q, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_Q) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Qperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "All ads about candidates should be allowed, even if they contain false content.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_Q, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("All ads about candidates should be allowed, even if they contain false content.")
+```
+
+ADS4_R: Companies should provide a publicly accessible database of all political ads.
+```{r, echo=FALSE}
+TASS2$ADS4_R <- to_factor(TASS2$ADS4_R)
+TASS2$ADS4_R <- recode(TASS2$ADS4_R, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_R) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Rperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Companies should provide a publicly accessible database of all political ads.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_R, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Companies should provide a publicly accessible database of all political ads.")
+```
+
+ADS4_S: Ads about candidates or upcoming elections should be banned, but ads about social issues (e.g., guns or abortion) should still be allowed.
+```{r, echo=FALSE}
+TASS2$ADS4_S <- to_factor(TASS2$ADS4_S)
+TASS2$ADS4_S <- recode(TASS2$ADS4_S, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_S) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Sperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Ads about candidates or upcoming elections should be banned, but ads about social issues (e.g., guns or abortion) should still be allowed.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_S, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Ads about candidates or upcoming elections should be banned, but ads about social issues (e.g., guns or abortion) should still be allowed.")
+```
+
+ADS4_T: Ads from certain sources like political action committees (PACs) and dark money organizations should be banned.
+```{r, echo=FALSE}
+TASS2$ADS4_T <- to_factor(TASS2$ADS4_T)
+TASS2$ADS4_T <- recode(TASS2$ADS4_T, "1" = "Strongly Agree", "2" = "Agree", "3" = "Slightly Agree", "4" = "Slightly Disagree", "5" = "Disagree", "6" = "Strongly Disagree", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS4_T) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS4_Tperc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Ads from certain sources like political action committees (PACs) and dark money organizations should be banned.", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS4_T, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Ads from certain sources like political action committees (PACs) and dark money organizations should be banned.")
+```
+
+Ads:Do you think that Facebook should allow ads like this?
+
+
+ADS5
+```{r, echo=FALSE}
+knitr::include_graphics("8557_AD_IMAGE_1.PNG")
+
+TASS2$ADS5 <- to_factor(TASS2$ADS5)
+TASS2$ADS5 <- recode(TASS2$ADS5, "1" = "Definitely allow", "2" = "Probably allow", "3" = "Probably not allow", "4" = "Definitely not allow", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS5) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS5perc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Do you think that Facebook should allow ads like this?", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS5 , y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Do you think that Facebook should allow ads like this?")
+```
+
+
+ADS6
+```{r, echo=FALSE}
+knitr::include_graphics("8557_AD_IMAGE_2.PNG")
+
+TASS2$ADS6 <- to_factor(TASS2$ADS6)
+TASS2$ADS6 <- recode(TASS2$ADS6, "1" = "Definitely allow", "2" = "Probably allow", "3" = "Probably not allow", "4" = "Definitely not allow", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS6) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS6perc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Do you think that Facebook should allow ads like this?", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS6, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Do you think that Facebook should allow ads like this?")
+```
+
+
+ADS7
+```{r, echo=FALSE}
+knitr::include_graphics("8557_AD_IMAGE_3.PNG")
+
+TASS2$ADS7 <- to_factor(TASS2$ADS7)
+TASS2$ADS7 <- recode(TASS2$ADS7, "1" = "Definitely allow", "2" = "Probably allow", "3" = "Probably not allow", "4" = "Definitely not allow", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS7) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS7perc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Do you think that Facebook should allow ads like this?", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS7, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Do you think that Facebook should allow ads like this?")
+```
+
+ADS8
+```{r, echo=FALSE}
+knitr::include_graphics("8557_AD_IMAGE_4.PNG")
+
+TASS2$ADS8 <- to_factor(TASS2$ADS8)
+TASS2$ADS8 <- recode(TASS2$ADS8, "1" = "Definitely allow", "2" = "Probably allow", "3" = "Probably not allow", "4" = "Definitely not allow", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS8) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS8perc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Do you think that Facebook should allow ads like this?", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS8, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Do you think that Facebook should allow ads like this?")
+```
+
+
+ADS9
+```{r, echo=FALSE}
+knitr::include_graphics("8557_AD_IMAGE_5.PNG")
+
+TASS2$ADS9 <- to_factor(TASS2$ADS9)
+TASS2$ADS9 <- recode(TASS2$ADS9, "1" = "Definitely allow", "2" = "Probably allow", "3" = "Probably not allow", "4" = "Definitely not allow", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS9) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS9perc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Do you think that Facebook should allow ads like this?", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS9, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Do you think that Facebook should allow ads like this?")
+```
+
+ADS11
+```{r, echo=FALSE}
+knitr::include_graphics("8557_AD_IMAGE_7.PNG")
+
+TASS2$ADS11 <- to_factor(TASS2$ADS11)
+TASS2$ADS11 <- recode(TASS2$ADS11, "1" = "Definitely allow", "2" = "Probably allow", "3" = "Probably not allow", "4" = "Definitely not allow", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS11) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS11perc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Do you think that Facebook should allow ads like this?", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS11, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Do you think that Facebook should allow ads like this?")
+```
+
+ADS12
+```{r, echo=FALSE}
+knitr::include_graphics("8557_AD_IMAGE_8.PNG")
+
+TASS2$ADS12 <- to_factor(TASS2$ADS12)
+TASS2$ADS12 <- recode(TASS2$ADS12, "1" = "Definitely allow", "2" = "Probably allow", "3" = "Probably not allow", "4" = "Definitely not allow", "77" = "Don't Know", "98" = "Skipped on web", "99" = "Refused")
+
+TASS2 %>%
+  group_by(ADS12) %>% 
+  summarise(n=n()) %>% 
+  mutate(ADS12perc = prop.table(n)*100) %>% 
+  kable(digits = 2, caption = "Do you think that Facebook should allow ads like this?", col.names = c("Response", "Frequency", "Percentage"))
+
+ggplot(data = TASS2) + 
+  geom_bar(mapping = aes(x = ADS12, y = ..prop.., group = 1), stat = "count") + 
+  scale_y_continuous(labels = scales::percent_format()) +  
+  xlab("Response") +
+  ylab("Percentage") +
+ggtitle("Do you think that Facebook should allow ads like this?")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
