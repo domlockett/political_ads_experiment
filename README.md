@@ -61,4 +61,4 @@ The `rep_main-plots.R` script creates detailed visualizations to effectively com
 
 ## Acknowledgments
 
-This project is a collaborative effort involving significant contributions from various scholars. The provided files and scripts reflect the extensive work done to understand and address the impacts of fake news on political behavior. The project was created for academic purposes and contains anonymized data to ensure privacy and confidentiality. The was created for the Washington University in Saint Louis Political Science Department, as well as, Exeter and Stanford University.
+This project is a collaborative effort involving significant contributions from various scholars. The provided files and scripts reflect the extensive work done to understand and address the impacts of fake news on political behavior. The project was created for academic purposes and contains anonymized data to ensure privacy and confidentiality. The was created for the Washington University in Saint Louis Political Science Department.
