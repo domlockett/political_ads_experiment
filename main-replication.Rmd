@@ -42,7 +42,7 @@ library(pBrackets)
 library(estimatr)
 library(ggtext)
 library(texreg)
-local <- 'C:/Users/dl0ck/OneDrive/Fall 2021/PolAdsTransparency/politics_user_study/'
+local <- 'C:/Users/Path/to/Data/PolAdsTransparency/politics_user_study/'
 ####################
 #data, models 
 #and functions 
