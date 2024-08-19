@@ -1,4 +1,5 @@
 # Political ads project
+![Research Poster](https://github.com/domlockett/political_ads_experiment/blob/main/images/poster.jpg)
 
 ## Summary
 In this project, we investigated social media users’ perceptions of digital political ads. We measured opinions on how platforms should design political ad UX and policies to establish a baseline understanding of user opinions, including the permissibility of political ads and microtargeting, and transparency in funding.
@@ -44,7 +45,6 @@ This script builds and evaluates statistical models to understand the relationsh
 
 ## Visualization
 
-![Research Poster](https://github.com/domlockett/political_ads_experiment/blob/main/images/poster.jpg)
 
 ### `political_ads_experiment/Publishing materials/rep_main-plots.R`
 The `rep_main-plots.R` script creates detailed visualizations to effectively communicate findings.
