@@ -23,8 +23,9 @@ I joined post-survey implementation, maintaining and overseeing data integrity. 
 
 # Detailed Methods
 
-## Data Cleaning and Transformations
-### `political_ads_experiment/Publishing materials/rep_cleaning-data.R`
+# Data Cleaning and Transformations
+## `political_ads_experiment/Publishing materials/rep_cleaning-data.R`
+
 The `rep_cleaning-data.R` script is essential for preparing the dataset and ensuring its quality and consistency.
 
 **Key Tasks:**
@@ -43,21 +44,69 @@ This script builds and evaluates statistical models to understand the relationsh
 - **Diagnostic Checks:** Conducts checks for multicollinearity, heteroscedasticity, and influential observations to ensure model validity.
 - **Output Presentation:** Uses the `texreg` package to create regression tables, preferred over `stargazer` for its advanced formatting options and ease of integration with LaTeX documents.
 
-## Visualization
+
+# Model data
+## `political_ads_experiment/Publishing materials/rep_main-models.R`
+This script analyzes data from a comprehensive study on political advertising and transparency. It processes survey responses, conjoint experiment results, and real advertisement data to explore public perceptions and the impact of various ad attributes.
+
+## Dependencies
+- tidyverse
+- ggplot2
+- cjoint
+- lme4
+- stargazer
+- estimatr
+
+## Data Sources
+
+- TASS survey data
+- Conjoint experiment data
+- Real advertisement data from multiple surveys
+
+## Key Analyses
+
+1. **Conjoint Analysis**: Examines the impact of ad attributes like message orientation, source type, and image on viewer perceptions.
+
+2. **Opinion Survey**: Processes responses to questions about political ad regulations.
+
+3. **Real Ad Impact**: Analyzes the effect of ads from various sources (e.g., Trump, Biden, Patagonia, Exxon) on viewer perceptions.
+
+4. **Stacked Experiment**: Combines data across experiments to compare effects of different ad types (candidate, organization, company).
 
 
-### `political_ads_experiment/Publishing materials/rep_main-plots.R`
+# Visualization
+## `political_ads_experiment/Publishing materials/rep_main-plots.R`
+
 The `rep_main-plots.R` script creates detailed visualizations to effectively communicate findings.
 
-**Key Tasks:**
-- **Result Visualization:** Generates point-range plots, interaction plots, and more using `ggplot2` and `plotly`.
-- **Customization:** Enhances plots with labels, legends, and themes for better clarity.
-- **Integration:** Calls models from `rep_main-models.R` to ensure consistency in visualizations with statistical analyses.
+## Dependencies
 
-**Visualizations:**
-- **Point-Range Plots:** Illustrate estimated effects and their confidence intervals for various ad characteristics.
-- **Interaction Plots:** Show how different variables interact to influence political perceptions.
-- **Advanced Techniques:** Uses `facet_wrap` in `ggplot2` for multi-panel plots, `plotly` for interactive visualizations, and `dplyr` for efficient data manipulation.
+- ggplot2
+- stargazer
+- texreg
+- gridExtra
+- and others (refer to the main script for a complete list)
+
+## Main Components
+
+### Conjoint Experiment Visualization (Fig. 1)
+- Creates an AMCE (Average Marginal Component Effect) plot for the unconditional model
+- Customizes plot appearance with specific colors and themes
+
+### Interaction Effects Plot (Fig. 2)
+- Visualizes the interaction between message orientation, source orientation, and prior attitudes
+- Uses custom color schemes and formatting
+
+### Real Advertisement Analysis
+- Generates plots and tables for the pooled analysis of real political advertisements
+- Includes mean comparisons across different ad types (Fig. 4)
+
+### Opinion Survey Analysis
+- Processes survey data on topics like ad funding disclosure and public databases
+
+### Statistical Output Formatting
+- Uses `texreg` and `stargazer` to create publication-ready tables of model results
+
 
 ## Acknowledgments
 
